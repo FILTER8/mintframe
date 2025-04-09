@@ -15,18 +15,18 @@ export default function Home() {
   const [selectedNft, setSelectedNft] = useState<string | null>(null);
   const [visibleEditions, setVisibleEditions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  useAccount();
+  useAccount(); // Keep for wallet context, even if not destructured
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-const { data: allEditions } = useReadContracts({
-  contracts: [{
-    address: FACTORY_ADDRESS as `0x${string}`,
-    abi: factoryAbi.abi,
-    functionName: "getAllEditions",
-    chainId: 84532,
-  }],
-}) as { data: { result: string[] }[] | undefined };
+  const { data: allEditions } = useReadContracts({
+    contracts: [{
+      address: FACTORY_ADDRESS as `0x${string}`,
+      abi: factoryAbi.abi,
+      functionName: "getAllEditions",
+      chainId: 84532,
+    }],
+  }) as { data: { result: string[] }[] | undefined };
 
   useEffect(() => {
     if (allEditions && allEditions[0]?.result) {
@@ -123,7 +123,7 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
     mintCountData,
   ] = contractData || [];
 
-  const { writeContract, data: txHash } = useWriteContract();
+  const { writeContract, data: txHash, error: writeError, isLoading: isWriting } = useWriteContract();
 
   const name = nameData?.result as string | undefined;
   const price = priceData?.result ? Number(priceData.result) / 1e18 : 0;
@@ -142,23 +142,32 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
   const isMaxMintReached = maxMintAllowed === 0;
   const isPublicMint = whitelistCount === 0;
 
-  // Simplified whitelist check (assuming no external provider for now)
-  const hasWhitelistToken = isPublicMint; // Placeholder; real check requires provider and contract calls
+  const hasWhitelistToken = isPublicMint; // Placeholder
 
   const canCollect = isPublicMint || hasWhitelistToken;
 
-  const handleCollect = () => {
-    if (!walletAddress) return;
-    switchChain({ chainId: 84532 });
+const handleCollect = async () => {
+  if (!walletAddress) return;
+  try {
+    console.log("Switching to Base Sepolia...");
+    await switchChain({ chainId: 84532 });
+    console.log("Chain switched, preparing transaction...");
     const totalCostWei = BigInt(Math.round(totalCost * 1e18));
-    writeContract({
+    console.log("Total cost (wei):", totalCostWei.toString());
+    console.log("Minting to contract:", address);
+    console.log("Wallet address:", walletAddress);
+    await writeContract({
       address: address as `0x${string}`,
       abi: editionAbi.abi,
       functionName: "collectBatch",
       args: [BigInt(1)],
       value: totalCostWei,
     });
-  };
+    console.log("Transaction sent, awaiting confirmation...");
+  } catch (error) {
+    console.error("Error in handleCollect:", error);
+  }
+};
 
   const handleWhitelistLink = () => {
     if (whitelist && whitelist.length > 0) {
@@ -199,7 +208,7 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
               <button
                 onClick={handleCollect}
                 className={`w-[320px] py-2 px-4 text-sm text-white ${isFreeMint ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"} disabled:bg-gray-400`}
-                disabled={!walletAddress || !canCollect || isMaxMintReached}
+                disabled={!walletAddress || !canCollect || isMaxMintReached || isWriting}
               >
                 {isFreeMint ? `Free (${baseCost.toFixed(4)} ETH)` : `Collect (${baseCost.toFixed(4)} ETH)`}
               </button>
@@ -228,7 +237,9 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
               )}
             </>
           )}
+          {isWriting && <p className="text-xs mt-2 text-yellow-500">Minting in progress...</p>}
           {txHash && <p className="text-xs mt-2 text-green-600">[Collected! Tx: {txHash.slice(0, 6)}...]</p>}
+          {writeError && <p className="text-xs mt-2 text-red-500">Error: {writeError.message}</p>}
         </div>
       )}
     </div>
