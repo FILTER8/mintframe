@@ -19,7 +19,7 @@ export default function Home() {
   useAccount(); // Keep for wallet context, even if not destructured
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const { setFrameReady, isFrameReady, context } = useMiniKit(); // MiniKit hook for frame readiness
+  const { setFrameReady, isFrameReady } = useMiniKit(); // MiniKit hook for frame readiness, no context
   const addFrame = useAddFrame(); // MiniKit hook for adding frame
 
   const { data: allEditions } = useReadContracts({
@@ -102,9 +102,9 @@ export default function Home() {
           <div className="flex space-x-2">
             <button
               className="px-2 py-1 text-xs text-[var(--foreground)] border border-[var(--gray-500)] hover:bg-[var(--gray-300)] active:bg-[var(--gray-500)] transition-colors opacity-60"
-              onClick={() => window.open("https://mintbay.vercel.app/editor", "_blank")}
+              onClick={() => window.open("https://mintbay.vercel.app/", "_blank")}
             >
-              [create Edition]
+              [visit mintbay]
             </button>
             <button
               className="px-2 py-1 text-xs text-[var(--foreground)] border border-[var(--gray-500)] hover:bg-[var(--gray-300)] active:bg-[var(--gray-500)] transition-colors opacity-60"
