@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #e5e5e5;
+  --foreground: #171717;
+  --black: #000000;
+  --gray-300: #d1d5db;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --coinbase-blue: #0052FF;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: monospace;
+  margin: 0;
+  padding: 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in forwards;
+}
+
+button {
+  font-family: monospace;
+  cursor: pointer;
+}
+
+.mintbay-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--black);
+  color: white;
+  border: 1px solid var(--black);
+  transition: background 0.2s ease;
+}
+
+.mintbay-btn:hover {
+  background: var(--gray-700);
+}
+
+.mintbay-btn:active {
+  background: var(--gray-500);
+}
+
+.mintbay-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wallet-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--coinbase-blue);
+  color: white;
+  border: 1px solid var(--coinbase-blue);
+  transition: background 0.2s ease;
+}
+
+.wallet-btn:hover {
+  background: #003ECB;
+}
+
+.wallet-btn:active {
+  background: #002A8F;
+}
