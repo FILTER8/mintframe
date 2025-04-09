@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAccount, useReadContracts, useSwitchChain, useWriteContract } from "wagmi";
+import { useMiniKit, useAddFrame } from "@coinbase/onchainkit/minikit"; // Add MiniKit hooks
 import Image from "next/image";
 import Header from "./components/header";
 import factoryAbi from "./contracts/MintbayEditionFactory.json";
@@ -18,6 +19,8 @@ export default function Home() {
   useAccount(); // Keep for wallet context, even if not destructured
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const { setFrameReady, isFrameReady, context } = useMiniKit(); // MiniKit hook for frame readiness
+  const addFrame = useAddFrame(); // MiniKit hook for adding frame
 
   const { data: allEditions } = useReadContracts({
     contracts: [{
@@ -27,6 +30,13 @@ export default function Home() {
       chainId: 84532,
     }],
   }) as { data: { result: string[] }[] | undefined };
+
+  // Signal frame readiness for Warpcast
+  useEffect(() => {
+    if (!isFrameReady) {
+      setFrameReady();
+    }
+  }, [setFrameReady, isFrameReady]);
 
   useEffect(() => {
     if (allEditions && allEditions[0]?.result) {
@@ -55,6 +65,14 @@ export default function Home() {
     };
   }, [visibleEditions, allEditions]);
 
+  // Handler for adding the frame
+  const handleAddFrame = async () => {
+    const result = await addFrame();
+    if (result) {
+      console.log("Frame added:", result.url, result.token);
+    }
+  };
+
   return (
     <div className="flex justify-center min-h-screen">
       <div className="w-full bg-[var(--background)] text-[var(--foreground)] flex flex-col">
@@ -81,12 +99,20 @@ export default function Home() {
         )}
         <footer className="w-full p-2 flex flex-col items-center fixed bottom-0 bg-[var(--background)] z-10">
           <hr className="border-t-8 border-gray-900 w-full mb-2" />
-          <button
-            className="px-2 py-1 text-xs text-[var(--foreground)] border border-[var(--gray-500)] hover:bg-[var(--gray-300)] active:bg-[var(--gray-500)] transition-colors opacity-60"
-            onClick={() => window.open("https://mintbay.vercel.app/", "_blank")}
-          >
-            [visit mintbay]
-          </button>
+          <div className="flex space-x-2">
+            <button
+              className="px-2 py-1 text-xs text-[var(--foreground)] border border-[var(--gray-500)] hover:bg-[var(--gray-300)] active:bg-[var(--gray-500)] transition-colors opacity-60"
+              onClick={() => window.open("https://mintbay.vercel.app/editor", "_blank")}
+            >
+              [create Edition]
+            </button>
+            <button
+              className="px-2 py-1 text-xs text-[var(--foreground)] border border-[var(--gray-500)] hover:bg-[var(--gray-300)] active:bg-[var(--gray-500)] transition-colors opacity-60"
+              onClick={handleAddFrame}
+            >
+              [save frame]
+            </button>
+          </div>
         </footer>
       </div>
     </div>
@@ -146,28 +172,28 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
 
   const canCollect = isPublicMint || hasWhitelistToken;
 
-const handleCollect = async () => {
-  if (!walletAddress) return;
-  try {
-    console.log("Switching to Base Sepolia...");
-    await switchChain({ chainId: 84532 });
-    console.log("Chain switched, preparing transaction...");
-    const totalCostWei = BigInt(Math.round(totalCost * 1e18));
-    console.log("Total cost (wei):", totalCostWei.toString());
-    console.log("Minting to contract:", address);
-    console.log("Wallet address:", walletAddress);
-    await writeContract({
-      address: address as `0x${string}`,
-      abi: editionAbi.abi,
-      functionName: "collectBatch",
-      args: [BigInt(1)],
-      value: totalCostWei,
-    });
-    console.log("Transaction sent, awaiting confirmation...");
-  } catch (error) {
-    console.error("Error in handleCollect:", error);
-  }
-};
+  const handleCollect = async () => {
+    if (!walletAddress) return;
+    try {
+      console.log("Switching to Base Sepolia...");
+      await switchChain({ chainId: 84532 });
+      console.log("Chain switched, preparing transaction...");
+      const totalCostWei = BigInt(Math.round(totalCost * 1e18));
+      console.log("Total cost (wei):", totalCostWei.toString());
+      console.log("Minting to contract:", address);
+      console.log("Wallet address:", walletAddress);
+      await writeContract({
+        address: address as `0x${string}`,
+        abi: editionAbi.abi,
+        functionName: "collectBatch",
+        args: [BigInt(1)],
+        value: totalCostWei,
+      });
+      console.log("Transaction sent, awaiting confirmation...");
+    } catch (error) {
+      console.error("Error in handleCollect:", error);
+    }
+  };
 
   const handleWhitelistLink = () => {
     if (whitelist && whitelist.length > 0) {
