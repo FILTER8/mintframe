@@ -7,10 +7,36 @@ import Image from "next/image";
 import Header from "./components/header";
 import factoryAbi from "./contracts/MintbayEditionFactory.json";
 import editionAbi from "./contracts/MintbayEdition.json";
+import { Metadata } from "next"; // Add Metadata import
 
 const FACTORY_ADDRESS = "0x61Ab3bc8372B97f3e88a6D400cB056a46BC42C17";
 const INITIAL_VISIBLE = 6;
 const LAUNCHPAD_FEE = "0.0004";
+
+// Define metadata for Farcaster Frame
+export const metadata: Metadata = {
+  title: "Mintbay Frame",
+  description: "Mint NFTs on Base Sepolia",
+  openGraph: {
+    title: "Mintbay Frame",
+    description: "Mint NFTs on Base Sepolia",
+    images: [
+      {
+        url: "https://your-static-image-url.com/preview.png", // Replace with a real image URL (e.g., Imgur)
+        width: 1200,
+        height: 630,
+        alt: "Mintbay Frame Preview",
+      },
+    ],
+  },
+  other: {
+    "fc:frame": "vNext",
+    "fc:frame:image": "https://github.com/FILTER8/mintframe/blob/db4a3853ce1043c2ea6dd9909723ceab24ad3c5e/public/mintbay.png", // Same image as og:image
+    "fc:frame:button:1": "View Gallery",
+    "fc:frame:button:1:action": "post",
+    "fc:frame:button:1:target": "https://mintframe-sigma.vercel.app/", // Points to itself for simplicity
+  },
+};
 
 export default function Home() {
   const [selectedNft, setSelectedNft] = useState<string | null>(null);
@@ -23,12 +49,14 @@ export default function Home() {
   const addFrame = useAddFrame();
 
   const { data: allEditions } = useReadContracts({
-    contracts: [{
-      address: FACTORY_ADDRESS as `0x${string}`,
-      abi: factoryAbi.abi,
-      functionName: "getAllEditions",
-      chainId: 84532,
-    }],
+    contracts: [
+      {
+        address: FACTORY_ADDRESS as `0x${string}`,
+        abi: factoryAbi.abi,
+        functionName: "getAllEditions",
+        chainId: 84532,
+      },
+    ],
   }) as { data: { result: string[] }[] | undefined };
 
   useEffect(() => {
@@ -50,7 +78,12 @@ export default function Home() {
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && allEditions && allEditions[0]?.result && visibleEditions.length < allEditions[0].result.length) {
+        if (
+          entries[0].isIntersecting &&
+          allEditions &&
+          allEditions[0]?.result &&
+          visibleEditions.length < allEditions[0].result.length
+        ) {
           setPage((prev) => prev + 1);
         }
       },
@@ -86,7 +119,11 @@ export default function Home() {
             ) : (
               <div className="mt-8 w-[304px] flex flex-wrap justify-center gap-0 mx-auto">
                 {visibleEditions.map((address) => (
-                  <div key={address} onClick={() => setSelectedNft(address)} className="w-[144px] cursor-pointer animate-fade-in">
+                  <div
+                    key={address}
+                    onClick={() => setSelectedNft(address)}
+                    className="w-[144px] cursor-pointer animate-fade-in"
+                  >
                     <NFTImage address={address} tokenId={1} scale={1} />
                   </div>
                 ))}
@@ -147,7 +184,7 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
     mintCountData,
   ] = contractData || [];
 
-  const { writeContract, data: txHash, error: writeError, isPending: isWriting } = useWriteContract(); // Fix: isPending instead of isLoading
+  const { writeContract, data: txHash, error: writeError, isPending: isWriting } = useWriteContract();
 
   const name = nameData?.result as string | undefined;
   const price = priceData?.result ? Number(priceData.result) / 1e18 : 0;
@@ -230,7 +267,9 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
             <>
               <button
                 onClick={handleCollect}
-                className={`w-[320px] py-2 px-4 text-sm text-white ${isFreeMint ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"} disabled:bg-gray-400`}
+                className={`w-[320px] py-2 px-4 text-sm text-white ${
+                  isFreeMint ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"
+                } disabled:bg-gray-400`}
                 disabled={!walletAddress || !canCollect || isMaxMintReached || isWriting}
               >
                 {isFreeMint ? `Free (${baseCost.toFixed(4)} ETH)` : `Collect (${baseCost.toFixed(4)} ETH)`}
@@ -274,13 +313,15 @@ function NFTImage({ address, tokenId, scale }: { address: string; tokenId: numbe
   const size = 144 * scale;
 
   const { data: tokenURI } = useReadContracts({
-    contracts: [{
-      address: address as `0x${string}`,
-      abi: editionAbi.abi,
-      functionName: "tokenURI",
-      args: [tokenId],
-      chainId: 84532,
-    }],
+    contracts: [
+      {
+        address: address as `0x${string}`,
+        abi: editionAbi.abi,
+        functionName: "tokenURI",
+        args: [tokenId],
+        chainId: 84532,
+      },
+    ],
   });
 
   useEffect(() => {
@@ -307,19 +348,16 @@ function NFTImage({ address, tokenId, scale }: { address: string; tokenId: numbe
 
   if (!imageSrc) {
     return (
-      <div className="bg-[var(--gray-300)] flex items-center justify-center animate-fade-in" style={{ width: size, height: size }}>
+      <div
+        className="bg-[var(--gray-300)] flex items-center justify-center animate-fade-in"
+        style={{ width: size, height: size }}
+      >
         <span className="text-[var(--gray-500)] text-xs">Loading...</span>
       </div>
     );
   }
 
   return (
-    <Image
-      src={imageSrc}
-      alt={`NFT ${tokenId}`}
-      width={size}
-      height={size}
-      className="object-contain animate-fade-in"
-    />
+    <Image src={imageSrc} alt={`NFT ${tokenId}`} width={size} height={size} className="object-contain animate-fade-in" />
   );
 }
