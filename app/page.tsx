@@ -58,7 +58,7 @@ export default function Home() {
   return (
     <div className="flex justify-center min-h-screen">
       <div className="w-full bg-[var(--background)] text-[var(--foreground)] flex flex-col">
-        <Header walletAddress={walletAddress} />
+        <Header />
         {selectedNft ? (
           <div className="w-full max-w-[512px] mx-auto">
             <DetailPage address={selectedNft} setSelectedNft={setSelectedNft} />

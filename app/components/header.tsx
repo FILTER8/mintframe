@@ -1,9 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { ConnectWallet } from "@coinbase/onchainkit/wallet";
 
-export default function Header({ walletAddress }: { walletAddress?: string }) {
+export default function Header() {
   return (
     <header className="w-full bg-[var(--black)] text-white p-2 flex items-center justify-between fixed top-0 z-10">
       <div
