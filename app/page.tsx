@@ -15,7 +15,7 @@ export default function Home() {
   const [selectedNft, setSelectedNft] = useState<string | null>(null);
   const [visibleEditions, setVisibleEditions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  const { address: walletAddress } = useAccount();
+  useAccount();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
