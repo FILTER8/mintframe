@@ -2,25 +2,25 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAccount, useReadContracts, useSwitchChain, useWriteContract } from "wagmi";
-import { useMiniKit, useAddFrame } from "@coinbase/onchainkit/minikit"; // Add MiniKit hooks
+import { useMiniKit, useAddFrame } from "@coinbase/onchainkit/minikit";
 import Image from "next/image";
 import Header from "./components/header";
 import factoryAbi from "./contracts/MintbayEditionFactory.json";
 import editionAbi from "./contracts/MintbayEdition.json";
 
 const FACTORY_ADDRESS = "0x61Ab3bc8372B97f3e88a6D400cB056a46BC42C17";
-const INITIAL_VISIBLE = 6; // Initial 6 images (2 per row, 3 rows)
-const LAUNCHPAD_FEE = "0.0004"; // Fixed fee as per [id].tsx
+const INITIAL_VISIBLE = 6;
+const LAUNCHPAD_FEE = "0.0004";
 
 export default function Home() {
   const [selectedNft, setSelectedNft] = useState<string | null>(null);
   const [visibleEditions, setVisibleEditions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  useAccount(); // Keep for wallet context, even if not destructured
+  useAccount();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const { setFrameReady, isFrameReady } = useMiniKit(); // MiniKit hook for frame readiness, no context
-  const addFrame = useAddFrame(); // MiniKit hook for adding frame
+  const { setFrameReady, isFrameReady } = useMiniKit();
+  const addFrame = useAddFrame();
 
   const { data: allEditions } = useReadContracts({
     contracts: [{
@@ -31,7 +31,6 @@ export default function Home() {
     }],
   }) as { data: { result: string[] }[] | undefined };
 
-  // Signal frame readiness for Warpcast
   useEffect(() => {
     if (!isFrameReady) {
       setFrameReady();
@@ -41,7 +40,7 @@ export default function Home() {
   useEffect(() => {
     if (allEditions && allEditions[0]?.result) {
       const editionsArray = Array.isArray(allEditions[0].result) ? allEditions[0].result : [];
-      const reversedEditions = [...editionsArray].reverse(); // Latest first
+      const reversedEditions = [...editionsArray].reverse();
       setVisibleEditions(reversedEditions.slice(0, INITIAL_VISIBLE * page));
     }
   }, [allEditions, page]);
@@ -65,7 +64,6 @@ export default function Home() {
     };
   }, [visibleEditions, allEditions]);
 
-  // Handler for adding the frame
   const handleAddFrame = async () => {
     const result = await addFrame();
     if (result) {
@@ -149,7 +147,7 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
     mintCountData,
   ] = contractData || [];
 
-  const { writeContract, data: txHash, error: writeError, isLoading: isWriting } = useWriteContract();
+  const { writeContract, data: txHash, error: writeError, isPending: isWriting } = useWriteContract(); // Fix: isPending instead of isLoading
 
   const name = nameData?.result as string | undefined;
   const price = priceData?.result ? Number(priceData.result) / 1e18 : 0;
@@ -168,8 +166,7 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
   const isMaxMintReached = maxMintAllowed === 0;
   const isPublicMint = whitelistCount === 0;
 
-  const hasWhitelistToken = isPublicMint; // Placeholder
-
+  const hasWhitelistToken = isPublicMint;
   const canCollect = isPublicMint || hasWhitelistToken;
 
   const handleCollect = async () => {
