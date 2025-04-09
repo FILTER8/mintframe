@@ -19,14 +19,14 @@ export default function Home() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const { data: allEditions } = useReadContracts({
-    contracts: [{
-      address: FACTORY_ADDRESS as `0x${string}`,
-      abi: factoryAbi.abi,
-      functionName: "getAllEditions",
-      chainId: 84532,
-    }],
-  });
+const { data: allEditions } = useReadContracts({
+  contracts: [{
+    address: FACTORY_ADDRESS as `0x${string}`,
+    abi: factoryAbi.abi,
+    functionName: "getAllEditions",
+    chainId: 84532,
+  }],
+}) as { data: { result: string[] }[] | undefined };
 
   useEffect(() => {
     if (allEditions && allEditions[0]?.result) {
