@@ -16,19 +16,21 @@ export default function Home() {
   const [selectedNft, setSelectedNft] = useState<string | null>(null);
   const [visibleEditions, setVisibleEditions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  useAccount();
+  const { address: walletAddress, isConnected } = useAccount(); // Destructure isConnected
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const { setFrameReady, isFrameReady } = useMiniKit();
   const addFrame = useAddFrame();
 
   const { data: allEditions } = useReadContracts({
-    contracts: [{
-      address: FACTORY_ADDRESS as `0x${string}`,
-      abi: factoryAbi.abi,
-      functionName: "getAllEditions",
-      chainId: 84532,
-    }],
+    contracts: [
+      {
+        address: FACTORY_ADDRESS as `0x${string}`,
+        abi: factoryAbi.abi,
+        functionName: "getAllEditions",
+        chainId: 84532,
+      },
+    ],
   }) as { data: { result: string[] }[] | undefined };
 
   useEffect(() => {
@@ -50,7 +52,12 @@ export default function Home() {
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && allEditions && allEditions[0]?.result && visibleEditions.length < allEditions[0].result.length) {
+        if (
+          entries[0].isIntersecting &&
+          allEditions &&
+          allEditions[0]?.result &&
+          visibleEditions.length < allEditions[0].result.length
+        ) {
           setPage((prev) => prev + 1);
         }
       },
@@ -86,7 +93,11 @@ export default function Home() {
             ) : (
               <div className="mt-8 w-[304px] flex flex-wrap justify-center gap-0 mx-auto">
                 {visibleEditions.map((address) => (
-                  <div key={address} onClick={() => setSelectedNft(address)} className="w-[144px] cursor-pointer animate-fade-in">
+                  <div
+                    key={address}
+                    onClick={() => setSelectedNft(address)}
+                    className="w-[144px] cursor-pointer animate-fade-in"
+                  >
                     <NFTImage address={address} tokenId={1} scale={1} />
                   </div>
                 ))}
@@ -118,7 +129,7 @@ export default function Home() {
 }
 
 function DetailPage({ address, setSelectedNft }: { address: string; setSelectedNft: (val: string | null) => void }) {
-  const { address: walletAddress } = useAccount();
+  const { address: walletAddress, isConnected } = useAccount(); // Add isConnected
   const { switchChain } = useSwitchChain();
   const { data: contractData, isLoading } = useReadContracts({
     contracts: [
@@ -132,7 +143,7 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
       { address: address as `0x${string}`, abi: editionAbi.abi, functionName: "maxMintPerAddress", chainId: 84532 },
       { address: address as `0x${string}`, abi: editionAbi.abi, functionName: "mintCount", args: [walletAddress], chainId: 84532 },
     ],
-    query: { enabled: !!walletAddress },
+    query: { enabled: true }, // Remove !!walletAddress condition to fetch data even when not connected
   });
 
   const [
@@ -147,7 +158,7 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
     mintCountData,
   ] = contractData || [];
 
-  const { writeContract, data: txHash, error: writeError, isPending: isWriting } = useWriteContract(); // Fix: isPending instead of isLoading
+  const { writeContract, data: txHash, error: writeError, isPending: isWriting } = useWriteContract();
 
   const name = nameData?.result as string | undefined;
   const price = priceData?.result ? Number(priceData.result) / 1e18 : 0;
@@ -170,7 +181,10 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
   const canCollect = isPublicMint || hasWhitelistToken;
 
   const handleCollect = async () => {
-    if (!walletAddress) return;
+    if (!isConnected) {
+      alert("Please connect your wallet first to collect an NFT.");
+      return;
+    }
     try {
       console.log("Switching to Base Sepolia...");
       await switchChain({ chainId: 84532 });
@@ -230,8 +244,10 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
             <>
               <button
                 onClick={handleCollect}
-                className={`w-[320px] py-2 px-4 text-sm text-white ${isFreeMint ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"} disabled:bg-gray-400`}
-                disabled={!walletAddress || !canCollect || isMaxMintReached || isWriting}
+                className={`w-[320px] py-2 px-4 text-sm text-white ${
+                  isFreeMint ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"
+                } disabled:bg-gray-400`}
+                disabled={isMaxMintReached || isWriting} // Remove !walletAddress and !canCollect from disabled
               >
                 {isFreeMint ? `Free (${baseCost.toFixed(4)} ETH)` : `Collect (${baseCost.toFixed(4)} ETH)`}
               </button>
@@ -274,13 +290,15 @@ function NFTImage({ address, tokenId, scale }: { address: string; tokenId: numbe
   const size = 144 * scale;
 
   const { data: tokenURI } = useReadContracts({
-    contracts: [{
-      address: address as `0x${string}`,
-      abi: editionAbi.abi,
-      functionName: "tokenURI",
-      args: [tokenId],
-      chainId: 84532,
-    }],
+    contracts: [
+      {
+        address: address as `0x${string}`,
+        abi: editionAbi.abi,
+        functionName: "tokenURI",
+        args: [tokenId],
+        chainId: 84532,
+      },
+    ],
   });
 
   useEffect(() => {
@@ -307,19 +325,16 @@ function NFTImage({ address, tokenId, scale }: { address: string; tokenId: numbe
 
   if (!imageSrc) {
     return (
-      <div className="bg-[var(--gray-300)] flex items-center justify-center animate-fade-in" style={{ width: size, height: size }}>
+      <div
+        className="bg-[var(--gray-300)] flex items-center justify-center animate-fade-in"
+        style={{ width: size, height: size }}
+      >
         <span className="text-[var(--gray-500)] text-xs">Loading...</span>
       </div>
     );
   }
 
   return (
-    <Image
-      src={imageSrc}
-      alt={`NFT ${tokenId}`}
-      width={size}
-      height={size}
-      className="object-contain animate-fade-in"
-    />
+    <Image src={imageSrc} alt={`NFT ${tokenId}`} width={size} height={size} className="object-contain animate-fade-in" />
   );
 }
