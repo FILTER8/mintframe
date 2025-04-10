@@ -4,7 +4,7 @@ import { ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { useAccount, useDisconnect } from "wagmi";
 
 export default function Header() {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount(); // Removed 'address'
   const { disconnect } = useDisconnect();
 
   return (

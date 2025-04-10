@@ -16,7 +16,7 @@ export default function Home() {
   const [selectedNft, setSelectedNft] = useState<string | null>(null);
   const [visibleEditions, setVisibleEditions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  const { address: walletAddress, isConnected } = useAccount(); // Destructure isConnected
+  useAccount(); // Keep for Wagmi context, no destructuring needed here
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const { setFrameReady, isFrameReady } = useMiniKit();
@@ -129,7 +129,7 @@ export default function Home() {
 }
 
 function DetailPage({ address, setSelectedNft }: { address: string; setSelectedNft: (val: string | null) => void }) {
-  const { address: walletAddress, isConnected } = useAccount(); // Add isConnected
+  const { address: walletAddress, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
   const { data: contractData, isLoading } = useReadContracts({
     contracts: [
@@ -143,7 +143,7 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
       { address: address as `0x${string}`, abi: editionAbi.abi, functionName: "maxMintPerAddress", chainId: 84532 },
       { address: address as `0x${string}`, abi: editionAbi.abi, functionName: "mintCount", args: [walletAddress], chainId: 84532 },
     ],
-    query: { enabled: true }, // Remove !!walletAddress condition to fetch data even when not connected
+    query: { enabled: true },
   });
 
   const [
@@ -247,7 +247,7 @@ function DetailPage({ address, setSelectedNft }: { address: string; setSelectedN
                 className={`w-[320px] py-2 px-4 text-sm text-white ${
                   isFreeMint ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"
                 } disabled:bg-gray-400`}
-                disabled={isMaxMintReached || isWriting} // Remove !walletAddress and !canCollect from disabled
+                disabled={isMaxMintReached || isWriting}
               >
                 {isFreeMint ? `Free (${baseCost.toFixed(4)} ETH)` : `Collect (${baseCost.toFixed(4)} ETH)`}
               </button>
