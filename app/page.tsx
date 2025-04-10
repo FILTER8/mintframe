@@ -111,9 +111,9 @@ export default function Home() {
           <div className="flex space-x-2">
             <button
               className="px-2 py-1 text-xs text-[var(--foreground)] border border-[var(--gray-500)] hover:bg-[var(--gray-300)] active:bg-[var(--gray-500)] transition-colors opacity-60"
-              onClick={() => window.open("https://mintbay.vercel.app/editor", "_blank")}
+              onClick={() => window.open("https://mintbay.vercel.app/", "_blank")}
             >
-              [create Edition]
+              [visit mintbay]
             </button>
             <button
               className="px-2 py-1 text-xs text-[var(--foreground)] border border-[var(--gray-500)] hover:bg-[var(--gray-300)] active:bg-[var(--gray-500)] transition-colors opacity-60"
